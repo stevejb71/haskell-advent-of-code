@@ -21,20 +21,25 @@ scores secs rds = foldl' accumScores (initialScores rds) (take secs . distancesT
 initialScores :: [Reindeer] -> [(Reindeer, Score)]
 initialScores = fmap (\r -> (r,0))
 
-tuplize :: (a, [b]) -> [(a, b)]
-tuplize (a, bs) = fmap (\b -> (a, b)) bs
-
 accumScores :: [(Reindeer, Score)] -> [(Reindeer, Distance)] -> [(Reindeer, Score)]
-accumScores scores distances = increment winner scores
-  where winner = maxBySnd distances
+accumScores scores = foldl' increment scores . maxBySnd
 
-increment :: Eq a => a -> [(a, Int)] -> [(a, Int)]
-increment a = go []
+increment :: Eq a => [(a, Score)] -> a -> [(a, Score)]
+increment scores a = go [] scores
   where go acc [] = acc
         go acc ((x, n):rest) = go ((if x == a then (x,n+1) else (x,n)):acc) rest
 
-maxBySnd :: Ord b => [(a, b)] -> a
-maxBySnd = fst . maximumBy (\x y -> snd x `compare` snd y)
+maxBySnd :: Ord b => [(a, b)] -> [a]
+maxBySnd = fmap fst . maximaBy snd
+
+maximaBy :: Ord b => (a -> b) -> [a] -> [a]
+maximaBy f [] = []
+maximaBy f (a:as) = go [a] (f a) as
+  where go acc _ [] = acc
+        go acc eval (a:as) = case f a `compare` eval of
+                                LT -> go acc eval as
+                                EQ -> go (a:acc) eval as
+                                GT -> go [a] (f a) as
 
 distancesTravelled :: [Reindeer] -> [[(Reindeer, Distance)]]
 distancesTravelled rs = fmap (oneTick rs) [1..]
@@ -50,6 +55,3 @@ parse :: String -> Reindeer
 parse s = Reindeer name (read speed) (read flyTime) (read restPeriod)
   where [name, speed, flyTime, restPeriod] = readWords (words s) [0, 3, 6, 13]
         readWords ws = fmap (ws !!)
-
-rudolph = parse "Rudolph can fly 22 km/s for 8 seconds, but then must rest for 165 seconds."
-cupid = parse "Cupid can fly 8 km/s for 17 seconds, but then must rest for 114 seconds."
