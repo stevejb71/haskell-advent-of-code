@@ -7,11 +7,15 @@ import Data.Attoparsec.Text (Parser, char, decimal, parseOnly)
 import Data.Text (Text, pack)
 import Data.Matrix (matrix, Matrix, mapRow, toList)
 import Data.List (foldl')
+import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed.Mutable as MU
+import Data.STRef
 
 type Action = Bool -> Bool
 type Light = (Int, Int)
 data Instruction = Instruction {action :: Action, start :: Light, end :: Light}
 type Display = Matrix Bool
+type Row = MU.STVector Bool
 
 main :: IO ()
 main = readFile "input.txt" >>= print . part1

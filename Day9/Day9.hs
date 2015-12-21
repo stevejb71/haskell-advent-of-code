@@ -1,7 +1,5 @@
 module Day9 where
 
-import System.IO.Unsafe (unsafePerformIO)
-import Data.Maybe (fromJust)
 import Data.List (delete)
 
 type City = String
@@ -9,29 +7,29 @@ type Distance = Int
 type Route = ((City, City), Distance)
 type Graph = [Route]
 
+main :: IO ()
+main = readFile "input.txt" >>= print . part1
+
+part1 = shortestDistance . fmap parse . take 13 . lines
+
 parse :: String -> Route
 parse s = ((from, to), read dist) where [from, _, to, _, dist] = words s
--- shortestRoute :: Graph -> Distance
--- shortestRoute [] = 0
--- shortestRoute cs = do
---   c <- cs
---   let cs' = delete c cs
---
-shortestRouteFrom :: Route -> Graph -> Distance
-shortestRouteFrom r [x] = snd r
-shortestRouteFrom start g = minimumDefault distances 0
-  where g' = delete start g
-        nexts = nextRoutes start g'
-        distances = fmap (flip shortestRouteFrom g') nexts
 
-minimumDefault :: Ord a => [a] -> a -> a
-minimumDefault [] def = def
-minimumDefault as _ = minimum as
+shortestDistance :: [Route] -> Int
+shortestDistance = minimum . map distance . routes
+
+distance :: [Route] -> Int
+distance = sum . map snd
+
+routes :: Graph -> [[Route]]
+routes [] = undefined
+routes g@(r:_) = routesFrom r g
+
+routesFrom :: Route -> Graph -> [[Route]]
+routesFrom _ [r] = [[r]]
+routesFrom start g = map (start:) $ concatMap (`routesFrom` g') nextRs
+  where nextRs = delete start (nextRoutes start g)
+        g' = delete start g
 
 nextRoutes :: Route -> Graph -> [Route]
 nextRoutes ((start,end),_) = filter (\((c1,c2),_) -> (c1 `elem` [start,end] || c2 `elem` [start,end]))
-
-distance :: Route -> Distance
-distance = snd
-
-graph = unsafePerformIO $ readFile "input.txt" >>= return . fmap parse . lines
