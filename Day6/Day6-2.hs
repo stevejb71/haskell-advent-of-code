@@ -9,16 +9,16 @@ import Data.Text (Text, pack, lines)
 import qualified Data.Vector.Unboxed as G
 import qualified Data.Vector.Unboxed.Mutable as M
 
-type Action = Bool -> Bool
+type Action = Int -> Int
 type Light = (Int, Int)
 data Instruction = Instruction {action :: Action, start :: Light, end :: Light}
-type Display = M.IOVector Bool
+type Display = M.IOVector Int
 
 main :: IO ()
 main = part1 >>= print
 
-countLights :: G.Vector Bool -> Int
-countLights = G.length . G.filter id
+countLights :: G.Vector Int -> Int
+countLights = G.sum
 
 part1 :: IO Int
 part1 = do
@@ -30,7 +30,7 @@ part1 = do
   return $ countLights d'
 
 initialDisplay :: IO Display
-initialDisplay = M.replicate 1000000 False
+initialDisplay = M.replicate 1000000 0
 
 execute :: Display -> [Instruction] -> IO ()
 execute d = mapM_ executeI
@@ -48,5 +48,5 @@ light :: Parser Light
 light = (,) <$> (decimal <* char ',') <*> decimal
 
 actionP :: Parser Action
-actionP = match "turn on" (const True) <|> match "turn off" (const False) <|> match "toggle" not
+actionP = match "turn on" (+ 1) <|> match "turn off" (\x -> max 0 (x-1)) <|> match "toggle" (+ 2)
   where match s a = s >> pure a
